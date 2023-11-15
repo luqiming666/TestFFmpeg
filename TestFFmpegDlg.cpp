@@ -75,6 +75,7 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_TRANSCODE_WAVE, &CTestFFmpegDlg::OnBnClickedButtonTranscodeWave)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE2, &CTestFFmpegDlg::OnBnClickedButtonBrowse2)
 	ON_BN_CLICKED(IDC_BUTTON_AUDIO_CHANNEL_MERGE, &CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge)
+	ON_BN_CLICKED(IDC_BUTTON_REPLACE_AUDIO, &CTestFFmpegDlg::OnBnClickedButtonReplaceAudio)
 END_MESSAGE_MAP()
 
 
@@ -213,10 +214,10 @@ void CTestFFmpegDlg::OnBnClickedButtonTranscodeWave()
 		return;
 	}
 	
-	CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("test.wav"));
+	//CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("test.wav"));
 
 	CString strCmd;
-	strCmd.Format(_T(" -i %s -vn -y %s"), mSourceFile, strDestFile); // 注意：-i之前须有一个空格
+	strCmd.Format(_T(" -i %s -vn -y %s"), mSourceFile, _T("test.wav")); // 注意：-i之前须有一个空格
 
 	mTaskRunner.Run(strCmd, this);
 }
@@ -229,11 +230,25 @@ void CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge()
 		return;
 	}
 
-	CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("audio_merge.ogg"));
-
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -i %s -filter_complex \"[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]\" -map [aout] -y %s"), 
-		mSourceFile, mSourceFile2, strDestFile);
+		mSourceFile, mSourceFile2, _T("audio_merge.ogg"));
 
 	mTaskRunner.Run(strCmd, this);		
+}
+
+// ffmpeg -i %s -i %s -c:v copy -c:a aac -map 0:v -map 1:a -y %s
+// ffmpeg -i %s -i %s -c:v libx265 -c:a aac -map 0:v -map 1:a -y %s
+void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
+{
+	if (mSourceFile.IsEmpty() || mSourceFile2.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+
+	CString strCmd;
+	strCmd.Format(_T(" -i %s -i %s -c:v libx265 -c:a aac -map 0:v -map 1:a -y %s"),
+		mSourceFile, mSourceFile2, _T("audio_replaced.mp4"));
+
+	mTaskRunner.Run(strCmd, this);
 }

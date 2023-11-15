@@ -13,6 +13,7 @@
 #define IDC_EDIT_SRC_FILE2              1003
 #define IDC_BUTTON_BROWSE2              1004
 #define IDC_BUTTON_AUDIO_CHANNEL_MERGE  1007
+#define IDC_BUTTON_REPLACE_AUDIO        1008
 
 // Next default values for new objects
 // 

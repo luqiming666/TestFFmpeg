@@ -33,8 +33,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedButtonBrowse();
-	afx_msg void OnBnClickedButtonBrowse2();
+	afx_msg void OnDestroy();
 
 	virtual void OnTaskCompleted();
 
@@ -44,7 +43,9 @@ private:
 	FFmpegTask mTaskRunner;
 
 public:
-	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedButtonBrowse();
+	afx_msg void OnBnClickedButtonBrowse2();
 	afx_msg void OnBnClickedButtonTranscodeWave();
 	afx_msg void OnBnClickedButtonAudioChannelMerge();
+	afx_msg void OnBnClickedButtonReplaceAudio();
 };
