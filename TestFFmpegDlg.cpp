@@ -64,6 +64,7 @@ void CTestFFmpegDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE, mSourceFile);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE2, mSourceFile2);
+	DDX_Control(pDX, IDC_STATIC_VIDEO_WND, mVideoWnd);
 }
 
 BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
@@ -76,6 +77,10 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE2, &CTestFFmpegDlg::OnBnClickedButtonBrowse2)
 	ON_BN_CLICKED(IDC_BUTTON_AUDIO_CHANNEL_MERGE, &CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge)
 	ON_BN_CLICKED(IDC_BUTTON_REPLACE_AUDIO, &CTestFFmpegDlg::OnBnClickedButtonReplaceAudio)
+	ON_BN_CLICKED(IDC_BUTTON_PLAY, &CTestFFmpegDlg::OnBnClickedButtonPlay)
+	ON_BN_CLICKED(IDC_BUTTON_PAUSE, &CTestFFmpegDlg::OnBnClickedButtonPause)
+	ON_BN_CLICKED(IDC_BUTTON_STOP, &CTestFFmpegDlg::OnBnClickedButtonStop)
+	ON_BN_CLICKED(IDC_BUTTON_TEST_ANYTHING, &CTestFFmpegDlg::OnBnClickedButtonTestAnything)
 END_MESSAGE_MAP()
 
 
@@ -113,7 +118,8 @@ BOOL CTestFFmpegDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	CString ffmpegFile = UMiscUtils::GetRuntimeFilePath(_T("ffmpeg.exe"));
 	mTaskRunner.SetFFmpegPath(ffmpegFile);
-
+	mTaskRunner.SetFFplayPath(UMiscUtils::GetRuntimeFilePath(_T("ffplay.exe")));
+	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -170,7 +176,7 @@ void CTestFFmpegDlg::OnDestroy()
 {
 	CDialogEx::OnDestroy();
 
-	// TODO: 在此处添加消息处理程序代码
+	//mTaskRunner.Stop();
 }
 
 void CTestFFmpegDlg::OnTaskCompleted()
@@ -251,4 +257,82 @@ void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
 		mSourceFile, mSourceFile2, _T("audio_replaced.mp4"));
 
 	mTaskRunner.Run(strCmd, this);
+}
+
+// ffplay -hide_banner -nostats -i %s
+// 视频窗口不显示标题栏：-noborder
+// 修改视频窗口的标题：-window_title \"%s\"
+// 进入全屏播放：-fs
+// 控制视频窗口的宽和高：-x 400 -y 300
+// 控制视频窗口的起始坐标：-left 100 -top 100
+// 更多选项，参见ffplay.c 的 OptionDef
+void CTestFFmpegDlg::OnBnClickedButtonPlay()
+{
+	if (mSourceFile.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+
+	CString strCmd;
+	strCmd.Format(_T(" -hide_banner -nostats -i %s"), mSourceFile);
+	mTaskRunner.Play(strCmd);
+
+	Sleep(200);
+	HideFFplayConsoleWindow();
+}
+
+void CTestFFmpegDlg::HideFFplayConsoleWindow()
+{
+	HWND consoleWnd = ::FindWindow(_T("ConsoleWindowClass"), NULL);
+	if (consoleWnd)
+	{
+		TCHAR wndTitle[MAX_PATH];
+		::GetWindowText(consoleWnd, wndTitle, MAX_PATH);
+		
+		CString strTitle(wndTitle);
+		if (strTitle.Find(_T("ffplay.exe")) != -1) {
+			::ShowWindow(consoleWnd, SW_HIDE);
+		}
+	}
+}
+
+void CTestFFmpegDlg::OnBnClickedButtonPause()
+{
+	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
+	if (videoWindowHandle)
+	{
+		::PostMessage(videoWindowHandle, WM_KEYDOWN, VK_SPACE, 0);
+		Sleep(100);
+		::PostMessage(videoWindowHandle, WM_KEYUP, VK_SPACE, 0);
+	}
+}
+
+
+void CTestFFmpegDlg::OnBnClickedButtonStop()
+{
+	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
+	if (videoWindowHandle)
+	{
+		::PostMessage(videoWindowHandle, WM_CLOSE, 0, 0);
+	}
+}
+
+
+void CTestFFmpegDlg::OnBnClickedButtonTestAnything()
+{
+	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
+	if (videoWindowHandle)
+	{
+		// 修改窗口样式
+		LONG_PTR style = ::GetWindowLongPtr(videoWindowHandle, GWL_STYLE);
+		style = style & ~WS_CAPTION; // 去掉标题栏
+		style = style | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_EX_TOPMOST;
+
+		::SetWindowLongPtr(videoWindowHandle, GWL_STYLE, style);
+
+		// 使样式改变生效
+		::SetWindowPos(videoWindowHandle, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+
+		//::SetParent(videoWindowHandle, mVideoWnd.GetSafeHwnd());
+	}
 }

@@ -12,8 +12,13 @@
 #define IDC_BUTTON_TRANSCODE_WAVE       1002
 #define IDC_EDIT_SRC_FILE2              1003
 #define IDC_BUTTON_BROWSE2              1004
+#define IDC_BUTTON_PLAY                 1005
+#define IDC_BUTTON_PAUSE                1006
 #define IDC_BUTTON_AUDIO_CHANNEL_MERGE  1007
 #define IDC_BUTTON_REPLACE_AUDIO        1008
+#define IDC_BUTTON_STOP                 1009
+#define IDC_BUTTON_TEST_ANYTHING        1010
+#define IDC_STATIC_VIDEO_WND            1011
 
 // Next default values for new objects
 // 
@@ -21,7 +26,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1003
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -178,7 +178,7 @@ namespace UMiscUtils {
 		// 后面是PCM数据...
 	}
 
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool bSync)
+	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool visible, bool bSync)
 	{
 		// 创建进程信息结构体
 		PROCESS_INFORMATION processInfo;
@@ -188,8 +188,10 @@ namespace UMiscUtils {
 		STARTUPINFO startupInfo;
 		ZeroMemory(&startupInfo, sizeof(startupInfo));
 		startupInfo.cb = sizeof(startupInfo);
-		startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-		startupInfo.wShowWindow = SW_HIDE; // 隐藏命令行窗口
+		if (!visible) {
+			startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+			startupInfo.wShowWindow = SW_HIDE; // 隐藏命令行窗口
+		}		
 
 		// 启动外部软件
 		BOOL bSuccess = CreateProcess(

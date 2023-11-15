@@ -17,6 +17,7 @@ void FFmpegTask::Run(CString& cmdParams, ITaskCallback* callback)
 {
     m_CmdParams = cmdParams;
     m_Callback = callback;
+    m_TaskMode = FFMPEG;
 
     m_bThreadRunning = true;
     m_thread = std::thread(&FFmpegTask::DoRealTask, this);
@@ -35,8 +36,15 @@ void FFmpegTask::DoRealTask()
 {
     while (m_bThreadRunning)
     {
-        UMiscUtils::RunExternalApp(m_FFmpegFile.GetBuffer(), m_CmdParams.GetBuffer(), true);
-        m_FFmpegFile.ReleaseBuffer();
+        CString strToolPath = m_FFmpegFile;
+        bool bToolWndVisible = false;
+        if (m_TaskMode == FFPLAY) {
+            strToolPath = m_FFplayFile;
+            bToolWndVisible = true;
+        }
+
+        UMiscUtils::RunExternalApp(strToolPath.GetBuffer(), m_CmdParams.GetBuffer(), bToolWndVisible, true);
+        strToolPath.ReleaseBuffer();
         m_CmdParams.ReleaseBuffer();
 
         //std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -47,4 +55,13 @@ void FFmpegTask::DoRealTask()
         m_Callback->OnTaskCompleted();
     }
     m_thread.detach();
+}
+
+void FFmpegTask::Play(CString& cmdParams)
+{
+    m_CmdParams = cmdParams;
+    m_TaskMode = FFPLAY;
+
+    m_bThreadRunning = true;
+    m_thread = std::thread(&FFmpegTask::DoRealTask, this);
 }

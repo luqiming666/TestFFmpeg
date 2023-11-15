@@ -42,10 +42,17 @@ private:
 	CString mSourceFile2;
 	FFmpegTask mTaskRunner;
 
+	void HideFFplayConsoleWindow();
+
 public:
 	afx_msg void OnBnClickedButtonBrowse();
 	afx_msg void OnBnClickedButtonBrowse2();
 	afx_msg void OnBnClickedButtonTranscodeWave();
 	afx_msg void OnBnClickedButtonAudioChannelMerge();
 	afx_msg void OnBnClickedButtonReplaceAudio();
+	afx_msg void OnBnClickedButtonPlay();
+	afx_msg void OnBnClickedButtonPause();
+	afx_msg void OnBnClickedButtonStop();
+	afx_msg void OnBnClickedButtonTestAnything();
+	CStatic mVideoWnd;
 };
