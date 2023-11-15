@@ -9,8 +9,10 @@
 #define IDR_MAINFRAME                   128
 #define IDC_EDIT_SRC_FILE               1000
 #define IDC_BUTTON_BROWSE               1001
-#define IDC_BUTTON2                     1002
 #define IDC_BUTTON_TRANSCODE_WAVE       1002
+#define IDC_EDIT_SRC_FILE2              1003
+#define IDC_BUTTON_BROWSE2              1004
+#define IDC_BUTTON_AUDIO_CHANNEL_MERGE  1007
 
 // Next default values for new objects
 // 

@@ -54,6 +54,7 @@ END_MESSAGE_MAP()
 CTestFFmpegDlg::CTestFFmpegDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_TESTFFMPEG_DIALOG, pParent)
 	, mSourceFile(_T(""))
+	, mSourceFile2(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -62,6 +63,7 @@ void CTestFFmpegDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE, mSourceFile);
+	DDX_Text(pDX, IDC_EDIT_SRC_FILE2, mSourceFile2);
 }
 
 BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
@@ -71,6 +73,8 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_BROWSE, &CTestFFmpegDlg::OnBnClickedButtonBrowse)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_TRANSCODE_WAVE, &CTestFFmpegDlg::OnBnClickedButtonTranscodeWave)
+	ON_BN_CLICKED(IDC_BUTTON_BROWSE2, &CTestFFmpegDlg::OnBnClickedButtonBrowse2)
+	ON_BN_CLICKED(IDC_BUTTON_AUDIO_CHANNEL_MERGE, &CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge)
 END_MESSAGE_MAP()
 
 
@@ -176,9 +180,9 @@ void CTestFFmpegDlg::OnTaskCompleted()
 void CTestFFmpegDlg::OnBnClickedButtonBrowse()
 {
 	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
-		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv)|*.mp4;*.mpg;*.avi;*.wmv| \
+		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
 		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
-		All File (*.*)|*.*||"),
+		All Files (*.*)|*.*||"),
 		NULL);
 	if (fileDlg.DoModal() == IDOK)
 	{
@@ -187,9 +191,27 @@ void CTestFFmpegDlg::OnBnClickedButtonBrowse()
 	}
 }
 
+void CTestFFmpegDlg::OnBnClickedButtonBrowse2()
+{
+	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
+		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
+		All Files (*.*)|*.*||"),
+		NULL);
+	if (fileDlg.DoModal() == IDOK)
+	{
+		mSourceFile2 = fileDlg.GetPathName();
+		UpdateData(FALSE);
+	}
+}
+
+// ffmpeg -i %s -vn -y %s
 void CTestFFmpegDlg::OnBnClickedButtonTranscodeWave()
 {
-	if (mSourceFile.IsEmpty()) return;
+	if (mSourceFile.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
 	
 	CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("test.wav"));
 
@@ -197,4 +219,21 @@ void CTestFFmpegDlg::OnBnClickedButtonTranscodeWave()
 	strCmd.Format(_T(" -i %s -vn -y %s"), mSourceFile, strDestFile); // 注意：-i之前须有一个空格
 
 	mTaskRunner.Run(strCmd, this);
+}
+
+// ffmpeg -i %s -i %s -filter_complex "[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]" -map [aout] -y %s
+void CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge()
+{
+	if (mSourceFile.IsEmpty() || mSourceFile2.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+
+	CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("audio_merge.ogg"));
+
+	CString strCmd;
+	strCmd.Format(_T(" -i %s -i %s -filter_complex \"[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]\" -map [aout] -y %s"), 
+		mSourceFile, mSourceFile2, strDestFile);
+
+	mTaskRunner.Run(strCmd, this);		
 }

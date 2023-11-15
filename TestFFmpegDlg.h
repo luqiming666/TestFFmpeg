@@ -34,13 +34,17 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButtonBrowse();
+	afx_msg void OnBnClickedButtonBrowse2();
+
+	virtual void OnTaskCompleted();
+
 private:
 	CString mSourceFile;
+	CString mSourceFile2;
 	FFmpegTask mTaskRunner;
 
 public:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonTranscodeWave();
-
-	virtual void OnTaskCompleted();
+	afx_msg void OnBnClickedButtonAudioChannelMerge();
 };
