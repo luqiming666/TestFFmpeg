@@ -7,7 +7,7 @@
 #include "FFmpegTask.h"
 
 // CTestFFmpegDlg 对话框
-class CTestFFmpegDlg : public CDialogEx, public ITaskCallback
+class CTestFFmpegDlg : public CDialogEx, public ITaskObserver
 {
 // 构造
 public:

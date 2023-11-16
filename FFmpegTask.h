@@ -5,7 +5,7 @@
 #include <atomic>
 #include <string>
 
-class ITaskCallback {
+class ITaskObserver {
 public:
 	virtual void OnTaskCompleted() = 0;
 };
@@ -23,9 +23,10 @@ public:
 	~FFmpegTask();
 
 	bool LocateTools(CString& toolFolder);
+	void SetTaskObserver(ITaskObserver* observer) { m_StatusObserver = observer; }
 	std::string Probe(CString& srcFile);
 
-	void Run(CString& cmdParams, ITaskCallback* callback = NULL);
+	void Run(CString& cmdParams);
 	void Play(CString& cmdParams);
 	bool IsRunning() { return m_bThreadRunning; }
 	void Stop();
@@ -36,6 +37,7 @@ private:
 private:
 	std::thread m_thread;
 	std::atomic<bool> m_bThreadRunning;
+	ITaskObserver* m_StatusObserver;
 
 	CString m_FFmpegFile;
 	CString m_FFplayFile;
@@ -43,5 +45,4 @@ private:
 	TASK_MODE m_TaskMode;
 
 	CString m_CmdParams;
-	ITaskCallback* m_Callback;
 };

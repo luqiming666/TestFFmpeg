@@ -5,7 +5,7 @@
 
 FFmpegTask::FFmpegTask()
 	: m_bThreadRunning(false)
-    , m_Callback(NULL)
+    , m_StatusObserver(NULL)
 {
 }
 
@@ -34,7 +34,7 @@ std::string FFmpegTask::Probe(CString& srcFile)
     strFullCmd.Format(_T("%s -v quiet -print_format json -show_format -show_streams %s"), m_FFprobeFile, srcFile);
 
     std::string result = "";
-    UMiscUtils::RunExternalApp(strFullCmd.GetBuffer(), &result, true);
+    UMiscUtils::RunExternalApp(strFullCmd.GetBuffer(), &result, false);
     strFullCmd.ReleaseBuffer();
 
     /*char buffer[4096];
@@ -56,10 +56,9 @@ std::string FFmpegTask::Probe(CString& srcFile)
 
 }
 
-void FFmpegTask::Run(CString& cmdParams, ITaskCallback* callback)
+void FFmpegTask::Run(CString& cmdParams)
 {
     m_CmdParams = cmdParams;
-    m_Callback = callback;
     m_TaskMode = FFMPEG;
 
     m_bThreadRunning = true;
@@ -92,8 +91,8 @@ void FFmpegTask::DoRealTask()
         m_bThreadRunning = false;
     }
 
-    if (m_Callback) {
-        m_Callback->OnTaskCompleted();
+    if (m_StatusObserver) {
+        m_StatusObserver->OnTaskCompleted();
     }
     m_thread.detach();
 }

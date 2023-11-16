@@ -117,6 +117,7 @@ BOOL CTestFFmpegDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	mTaskRunner.SetTaskObserver(this);
 	mTaskRunner.LocateTools(UMiscUtils::GetRuntimeFilePath());
 	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -223,8 +224,7 @@ void CTestFFmpegDlg::OnBnClickedButtonTranscodeWave()
 
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -vn -y %s"), mSourceFile, _T("test.wav")); // 注意：-i之前须有一个空格
-
-	mTaskRunner.Run(strCmd, this);
+	mTaskRunner.Run(strCmd);
 }
 
 // ffmpeg -i %s -i %s -filter_complex "[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]" -map [aout] -y %s
@@ -238,8 +238,7 @@ void CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge()
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -i %s -filter_complex \"[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]\" -map [aout] -y %s"), 
 		mSourceFile, mSourceFile2, _T("audio_merge.ogg"));
-
-	mTaskRunner.Run(strCmd, this);		
+	mTaskRunner.Run(strCmd);		
 }
 
 // ffmpeg -i %s -i %s -c:v copy -c:a aac -map 0:v -map 1:a -y %s
@@ -254,8 +253,7 @@ void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -i %s -c:v libx265 -c:a aac -map 0:v -map 1:a -y %s"),
 		mSourceFile, mSourceFile2, _T("audio_replaced.mp4"));
-
-	mTaskRunner.Run(strCmd, this);
+	mTaskRunner.Run(strCmd);
 }
 
 // ffplay -hide_banner -nostats -autoexit -i %s
@@ -269,6 +267,11 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 {
 	if (mSourceFile.IsEmpty()) {
 		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+	if (mTaskRunner.IsRunning())
+	{
+		AfxMessageBox(_T("请等待当前的媒体文件播放结束！"));
 		return;
 	}
 
@@ -295,15 +298,44 @@ void CTestFFmpegDlg::HideFFplayConsoleWindow()
 		}
 	}
 }
+void pressKey(WORD key) {
+	INPUT input;
+	input.type = INPUT_KEYBOARD;
+	input.ki.wScan = 0;
+	input.ki.time = 0;
+	input.ki.dwExtraInfo = 0;
+	input.ki.wVk = key;
+	input.ki.dwFlags = 0;
+	SendInput(1, &input, sizeof(INPUT));
+}
+
+void releaseKey(WORD key) {
+	INPUT input;
+	input.type = INPUT_KEYBOARD;
+	input.ki.wScan = 0;
+	input.ki.time = 0;
+	input.ki.dwExtraInfo = 0;
+	input.ki.wVk = key;
+	input.ki.dwFlags = KEYEVENTF_KEYUP;
+	SendInput(1, &input, sizeof(INPUT));
+}
 
 void CTestFFmpegDlg::OnBnClickedButtonPause()
 {
 	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
 	if (videoWindowHandle)
 	{
-		::PostMessage(videoWindowHandle, WM_KEYDOWN, VK_SPACE, 0);
-		Sleep(100);
-		::PostMessage(videoWindowHandle, WM_KEYUP, VK_SPACE, 0);
+		//::PostMessage(videoWindowHandle, WM_KEYDOWN, VK_SPACE, 0);
+		//Sleep(100);
+		//::PostMessage(videoWindowHandle, WM_KEYUP, VK_SPACE, 0);
+
+		// 将 ffplay.exe 窗口设置为活动窗口
+		::SetForegroundWindow(videoWindowHandle);
+
+		// 模拟按下和释放空格键，实现暂停和继续播放
+		pressKey(VK_SPACE);
+		Sleep(1000);  // 暂停1秒
+		releaseKey(VK_SPACE);
 	}
 }
 
