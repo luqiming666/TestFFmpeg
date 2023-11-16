@@ -40,6 +40,7 @@ public:
 private:
 	CString mSourceFile;
 	CString mSourceFile2;
+	CStatic mVideoWnd;
 	FFmpegTask mTaskRunner;
 
 	void HideFFplayConsoleWindow();
@@ -54,5 +55,5 @@ public:
 	afx_msg void OnBnClickedButtonPause();
 	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnBnClickedButtonTestAnything();
-	CStatic mVideoWnd;
+	afx_msg void OnBnClickedButtonProbe();
 };

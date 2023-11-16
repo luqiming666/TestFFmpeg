@@ -13,6 +13,49 @@ FFmpegTask::~FFmpegTask()
 {
 }
 
+bool FFmpegTask::LocateTools(CString& toolFolder)
+{
+    TCHAR strTemp[MAX_PATH] = { 0 };
+    PathCombine(strTemp, toolFolder, _T("ffmpeg.exe"));
+    m_FFmpegFile = strTemp;
+
+    PathCombine(strTemp, toolFolder, _T("ffplay.exe"));
+    m_FFplayFile = strTemp;
+
+    PathCombine(strTemp, toolFolder, _T("ffprobe.exe"));
+    m_FFprobeFile = strTemp;
+    
+    return PathFileExists(m_FFmpegFile);
+}
+
+std::string FFmpegTask::Probe(CString& srcFile)
+{
+    CString strCmd;
+    strCmd.Format(_T("%s -v quiet -print_format json -show_format -show_streams %s"), m_FFprobeFile, srcFile);
+
+    std::string result = "";
+    //UMiscUtils::RunExternalApp(m_FFprobeFile.GetBuffer(), strCmd.GetBuffer(), &result, true);
+   // m_FFprobeFile.ReleaseBuffer();
+   // strCmd.ReleaseBuffer();
+    char buffer[4096];
+    FILE* pipe = _tpopen(strCmd, _T("r"));
+    if (pipe)
+    {
+        try {
+            while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        catch (...) {
+            _pclose(pipe);
+            throw;
+        }
+        _pclose(pipe);
+    }
+    return result;
+
+}
+
 void FFmpegTask::Run(CString& cmdParams, ITaskCallback* callback)
 {
     m_CmdParams = cmdParams;
@@ -37,13 +80,11 @@ void FFmpegTask::DoRealTask()
     while (m_bThreadRunning)
     {
         CString strToolPath = m_FFmpegFile;
-        bool bToolWndVisible = false;
         if (m_TaskMode == FFPLAY) {
             strToolPath = m_FFplayFile;
-            bToolWndVisible = true;
         }
 
-        UMiscUtils::RunExternalApp(strToolPath.GetBuffer(), m_CmdParams.GetBuffer(), bToolWndVisible, true);
+        UMiscUtils::RunExternalApp(strToolPath.GetBuffer(), m_CmdParams.GetBuffer(), true);
         strToolPath.ReleaseBuffer();
         m_CmdParams.ReleaseBuffer();
 

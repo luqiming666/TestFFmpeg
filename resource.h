@@ -19,6 +19,7 @@
 #define IDC_BUTTON_STOP                 1009
 #define IDC_BUTTON_TEST_ANYTHING        1010
 #define IDC_STATIC_VIDEO_WND            1011
+#define IDC_BUTTON_PROBE                1012
 
 // Next default values for new objects
 // 

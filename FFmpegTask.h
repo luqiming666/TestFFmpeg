@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <string>
 
 class ITaskCallback {
 public:
@@ -21,8 +22,8 @@ public:
 	FFmpegTask();
 	~FFmpegTask();
 
-	void SetFFmpegPath(CString& exeFile) { m_FFmpegFile = exeFile; }
-	void SetFFplayPath(CString& exeFile) { m_FFplayFile = exeFile; }
+	bool LocateTools(CString& toolFolder);
+	std::string Probe(CString& srcFile);
 
 	void Run(CString& cmdParams, ITaskCallback* callback = NULL);
 	void Play(CString& cmdParams);
@@ -38,6 +39,7 @@ private:
 
 	CString m_FFmpegFile;
 	CString m_FFplayFile;
+	CString m_FFprobeFile;
 	TASK_MODE m_TaskMode;
 
 	CString m_CmdParams;

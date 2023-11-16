@@ -81,6 +81,7 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE, &CTestFFmpegDlg::OnBnClickedButtonPause)
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CTestFFmpegDlg::OnBnClickedButtonStop)
 	ON_BN_CLICKED(IDC_BUTTON_TEST_ANYTHING, &CTestFFmpegDlg::OnBnClickedButtonTestAnything)
+	ON_BN_CLICKED(IDC_BUTTON_PROBE, &CTestFFmpegDlg::OnBnClickedButtonProbe)
 END_MESSAGE_MAP()
 
 
@@ -116,9 +117,7 @@ BOOL CTestFFmpegDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	CString ffmpegFile = UMiscUtils::GetRuntimeFilePath(_T("ffmpeg.exe"));
-	mTaskRunner.SetFFmpegPath(ffmpegFile);
-	mTaskRunner.SetFFplayPath(UMiscUtils::GetRuntimeFilePath(_T("ffplay.exe")));
+	mTaskRunner.LocateTools(UMiscUtils::GetRuntimeFilePath());
 	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -259,7 +258,7 @@ void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
 	mTaskRunner.Run(strCmd, this);
 }
 
-// ffplay -hide_banner -nostats -i %s
+// ffplay -hide_banner -nostats -autoexit -i %s
 // 视频窗口不显示标题栏：-noborder
 // 修改视频窗口的标题：-window_title \"%s\"
 // 进入全屏播放：-fs
@@ -274,11 +273,12 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 	}
 
 	CString strCmd;
-	strCmd.Format(_T(" -hide_banner -nostats -i %s"), mSourceFile);
+	strCmd.Format(_T(" -hide_banner -autoexit -i %s"), mSourceFile);
 	mTaskRunner.Play(strCmd);
 
-	Sleep(200);
-	HideFFplayConsoleWindow();
+	//注：通过CreateProcess参数就可以控制不创建控制台窗口
+	//Sleep(200);
+	//HideFFplayConsoleWindow();
 }
 
 void CTestFFmpegDlg::HideFFplayConsoleWindow()
@@ -335,4 +335,16 @@ void CTestFFmpegDlg::OnBnClickedButtonTestAnything()
 
 		//::SetParent(videoWindowHandle, mVideoWnd.GetSafeHwnd());
 	}
+}
+
+
+void CTestFFmpegDlg::OnBnClickedButtonProbe()
+{
+	if (mSourceFile.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+
+	std::string result = mTaskRunner.Probe(mSourceFile);
+	mVideoWnd.SetWindowText(CString(result.c_str()));
 }

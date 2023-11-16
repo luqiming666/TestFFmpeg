@@ -30,11 +30,17 @@ namespace UMiscUtils {
 			PathCombine(strTemp, strProcessPath, subFolder);
 			strProcessPath = strTemp;
 		}
-		CString strFinalFilePath;
-		PathCombine(strFinalFilePath.GetBuffer(MAX_PATH), strProcessPath, filename);
-		strFinalFilePath.ReleaseBuffer();
 
-		return strFinalFilePath;
+		if (filename) {
+			CString strFinalFilePath;
+			PathCombine(strFinalFilePath.GetBuffer(MAX_PATH), strProcessPath, filename);
+			strFinalFilePath.ReleaseBuffer();
+
+			return strFinalFilePath;
+		}
+		else {
+			return strProcessPath;
+		}
 	}
 	
 	CString GetExeFileVersion()
@@ -178,7 +184,7 @@ namespace UMiscUtils {
 		// 后面是PCM数据...
 	}
 
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool visible, bool bSync)
+	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool bSync)
 	{
 		// 创建进程信息结构体
 		PROCESS_INFORMATION processInfo;
@@ -188,10 +194,6 @@ namespace UMiscUtils {
 		STARTUPINFO startupInfo;
 		ZeroMemory(&startupInfo, sizeof(startupInfo));
 		startupInfo.cb = sizeof(startupInfo);
-		if (!visible) {
-			startupInfo.dwFlags = STARTF_USESHOWWINDOW;
-			startupInfo.wShowWindow = SW_HIDE; // 隐藏命令行窗口
-		}		
 
 		// 启动外部软件
 		BOOL bSuccess = CreateProcess(
@@ -200,7 +202,66 @@ namespace UMiscUtils {
 			NULL,                       // 默认安全性描述符
 			NULL,                       // 默认安全性描述符
 			FALSE,                      // 不继承句柄
-			0,                          // 无特殊标志
+			CREATE_NO_WINDOW,           // 不为新进程创建CUI窗口
+			NULL,                       // 默认环境变量
+			NULL,                       // 默认工作目录
+			&startupInfo,               // 启动信息结构体
+			&processInfo                // 进程信息结构体
+		);
+
+		if (bSuccess && bSync)
+		{
+			// 等待进程退出
+			WaitForSingleObject(processInfo.hProcess, INFINITE);
+		}
+
+		// 关闭进程和线程的句柄
+		CloseHandle(processInfo.hProcess);
+		CloseHandle(processInfo.hThread);
+
+		return bSuccess == TRUE;
+	}
+
+	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, std::string* outInfo, bool bSync)
+	{
+		// 创建进程信息结构体
+		PROCESS_INFORMATION processInfo;
+		ZeroMemory(&processInfo, sizeof(processInfo));
+
+		// 创建启动信息结构体
+		STARTUPINFO startupInfo;
+		ZeroMemory(&startupInfo, sizeof(startupInfo));
+		startupInfo.cb = sizeof(startupInfo);
+
+		// 是否需要获取程序的控制台输出内容？
+		HANDLE hReadPipe = NULL;
+		HANDLE hWritePipe = NULL;
+		BOOL bPipeCreated = FALSE;
+		if (outInfo) {
+			SECURITY_ATTRIBUTES saAttr;
+			saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+			saAttr.bInheritHandle = TRUE;
+			saAttr.lpSecurityDescriptor = NULL;
+			bPipeCreated = CreatePipe(&hReadPipe, &hWritePipe, &saAttr, 0);
+
+			startupInfo.hStdError = hWritePipe;
+			startupInfo.hStdOutput = hWritePipe;
+			startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+		}
+
+		//if (!visible) {
+			//startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+			//startupInfo.wShowWindow = SW_HIDE; // 隐藏命令行窗口
+		//}		
+
+		// 启动外部软件
+		BOOL bSuccess = CreateProcess(
+			appPath,					// 外部软件的路径
+			appParams,					// 命令行参数
+			NULL,                       // 默认安全性描述符
+			NULL,                       // 默认安全性描述符
+			FALSE,                      // 不继承句柄
+			CREATE_NO_WINDOW,           // 不为新进程创建CUI窗口
 			NULL,                       // 默认环境变量
 			NULL,                       // 默认工作目录
 			&startupInfo,               // 启动信息结构体
@@ -213,6 +274,22 @@ namespace UMiscUtils {
 			WaitForSingleObject(processInfo.hProcess, INFINITE);	
 		}
 
+		// 读取管道内容
+		if (bPipeCreated) {
+			CloseHandle(hWritePipe);
+
+			DWORD dwRead;
+			CHAR chBuf[4096];
+			BOOL success;
+			while (true) {
+				success = ReadFile(hReadPipe, chBuf, sizeof(chBuf), &dwRead, NULL);
+				if (!success || dwRead == 0) break;
+				std::string s(chBuf, dwRead);
+				*outInfo += s;
+			}
+			CloseHandle(hReadPipe);
+		}
+		
 		// 关闭进程和线程的句柄
 		CloseHandle(processInfo.hProcess);
 		CloseHandle(processInfo.hThread);

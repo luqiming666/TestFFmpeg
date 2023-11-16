@@ -6,7 +6,7 @@
 
 namespace UMiscUtils {
 
-	CString GetRuntimeFilePath(TCHAR* filename, TCHAR* subFolder = NULL);
+	CString GetRuntimeFilePath(TCHAR* filename = NULL, TCHAR* subFolder = NULL);
 	CString GetExeFileVersion();
 	CString GetProgramDataPath(TCHAR* subFolder, TCHAR* filename);
 
@@ -18,5 +18,6 @@ namespace UMiscUtils {
 
 	void WriteWaveFileHeader(std::fstream& file, UINT32 sampleRate, UINT16 numChannels, UINT16 bitsPerSample, UINT32 pcmDataSize = 0);
 
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool visible = false, bool bSync = false);
+	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool bSync = false);
+	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, std::string* outInfo, bool bSync = false);
 }
