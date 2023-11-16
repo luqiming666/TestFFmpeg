@@ -30,14 +30,14 @@ bool FFmpegTask::LocateTools(CString& toolFolder)
 
 std::string FFmpegTask::Probe(CString& srcFile)
 {
-    CString strCmd;
-    strCmd.Format(_T("%s -v quiet -print_format json -show_format -show_streams %s"), m_FFprobeFile, srcFile);
+    CString strFullCmd;
+    strFullCmd.Format(_T("%s -v quiet -print_format json -show_format -show_streams %s"), m_FFprobeFile, srcFile);
 
     std::string result = "";
-    //UMiscUtils::RunExternalApp(m_FFprobeFile.GetBuffer(), strCmd.GetBuffer(), &result, true);
-   // m_FFprobeFile.ReleaseBuffer();
-   // strCmd.ReleaseBuffer();
-    char buffer[4096];
+    UMiscUtils::RunExternalApp(strFullCmd.GetBuffer(), &result, true);
+    strFullCmd.ReleaseBuffer();
+
+    /*char buffer[4096];
     FILE* pipe = _tpopen(strCmd, _T("r"));
     if (pipe)
     {
@@ -51,7 +51,7 @@ std::string FFmpegTask::Probe(CString& srcFile)
             throw;
         }
         _pclose(pipe);
-    }
+    }*/
     return result;
 
 }

@@ -222,7 +222,7 @@ namespace UMiscUtils {
 		return bSuccess == TRUE;
 	}
 
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, std::string* outInfo, bool bSync)
+	bool RunExternalApp(TCHAR* fullCmd, std::string* outInfo, bool bSync)
 	{
 		// 创建进程信息结构体
 		PROCESS_INFORMATION processInfo;
@@ -256,11 +256,11 @@ namespace UMiscUtils {
 
 		// 启动外部软件
 		BOOL bSuccess = CreateProcess(
-			appPath,					// 外部软件的路径
-			appParams,					// 命令行参数
+			NULL,						// 外部软件的路径
+			fullCmd,					// 命令行参数
 			NULL,                       // 默认安全性描述符
 			NULL,                       // 默认安全性描述符
-			FALSE,                      // 不继承句柄
+			TRUE,						// 继承句柄!!!
 			CREATE_NO_WINDOW,           // 不为新进程创建CUI窗口
 			NULL,                       // 默认环境变量
 			NULL,                       // 默认工作目录
@@ -271,7 +271,7 @@ namespace UMiscUtils {
 		if (bSuccess && bSync)
 		{
 			// 等待进程退出
-			WaitForSingleObject(processInfo.hProcess, INFINITE);	
+			WaitForSingleObject(processInfo.hProcess, 1000);	
 		}
 
 		// 读取管道内容

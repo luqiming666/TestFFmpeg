@@ -19,5 +19,5 @@ namespace UMiscUtils {
 	void WriteWaveFileHeader(std::fstream& file, UINT32 sampleRate, UINT16 numChannels, UINT16 bitsPerSample, UINT32 pcmDataSize = 0);
 
 	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool bSync = false);
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, std::string* outInfo, bool bSync = false);
+	bool RunExternalApp(TCHAR* fullCmd, std::string* outInfo, bool bSync = false);
 }
