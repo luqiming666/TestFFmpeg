@@ -13,6 +13,8 @@
 #define new DEBUG_NEW
 #endif
 
+#define PLAYER_TIMER_ID 666
+#define PLAYER_TIMER_INTERVAL 100
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -55,6 +57,9 @@ CTestFFmpegDlg::CTestFFmpegDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_TESTFFMPEG_DIALOG, pParent)
 	, mSourceFile(_T(""))
 	, mSourceFile2(_T(""))
+	, mVideoWndWidth(0)
+	, mVideoWndHeight(0)
+	, mPlayerTimer(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -82,6 +87,8 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_STOP, &CTestFFmpegDlg::OnBnClickedButtonStop)
 	ON_BN_CLICKED(IDC_BUTTON_TEST_ANYTHING, &CTestFFmpegDlg::OnBnClickedButtonTestAnything)
 	ON_BN_CLICKED(IDC_BUTTON_PROBE, &CTestFFmpegDlg::OnBnClickedButtonProbe)
+	ON_WM_MOVE()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -119,6 +126,11 @@ BOOL CTestFFmpegDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	mTaskRunner.SetTaskObserver(this);
 	mTaskRunner.LocateTools(UMiscUtils::GetRuntimeFilePath());
+
+	RECT wndRect;
+	mVideoWnd.GetWindowRect(&wndRect);
+	mVideoWndWidth = wndRect.right - wndRect.left;
+	mVideoWndHeight = wndRect.bottom - wndRect.top;
 	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -174,9 +186,18 @@ HCURSOR CTestFFmpegDlg::OnQueryDragIcon()
 
 void CTestFFmpegDlg::OnDestroy()
 {
-	CDialogEx::OnDestroy();
+	if (mPlayerTimer != 0) {
+		KillTimer(mPlayerTimer);
+		mPlayerTimer = 0;
+	}
 
-	//mTaskRunner.Stop();
+	if (mTaskRunner.IsRunning())
+	{
+		OnBnClickedButtonStop();
+		//mTaskRunner.Stop();
+	}
+
+	CDialogEx::OnDestroy();
 }
 
 void CTestFFmpegDlg::OnTaskCompleted()
@@ -263,6 +284,7 @@ void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
 // 控制视频窗口的宽和高：-x 400 -y 300
 // 控制视频窗口的起始坐标：-left 100 -top 100
 // 更多选项，参见ffplay.c 的 OptionDef
+//	http://ffmpeg.org/ffplay.html#Main-options
 void CTestFFmpegDlg::OnBnClickedButtonPlay()
 {
 	if (mSourceFile.IsEmpty()) {
@@ -276,12 +298,17 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 	}
 
 	CString strCmd;
-	strCmd.Format(_T(" -hide_banner -autoexit -i %s"), mSourceFile);
+	strCmd.Format(_T(" -hide_banner -autoexit -noborder -alwaysontop -x %d -y %d -i %s"), 360, 240, mSourceFile);
+	mTaskRunner.SetTaskObserver(NULL);
 	mTaskRunner.Play(strCmd);
 
 	//注：通过CreateProcess参数就可以控制不创建控制台窗口
 	//Sleep(200);
 	//HideFFplayConsoleWindow();
+
+	//Sleep(1000);
+	//MoveFFplayVideoWindow();
+	mPlayerTimer = SetTimer(PLAYER_TIMER_ID, PLAYER_TIMER_INTERVAL, NULL);
 }
 
 void CTestFFmpegDlg::HideFFplayConsoleWindow()
@@ -379,4 +406,41 @@ void CTestFFmpegDlg::OnBnClickedButtonProbe()
 
 	std::string result = mTaskRunner.Probe(mSourceFile);
 	mVideoWnd.SetWindowText(CString(result.c_str()));
+}
+
+void CTestFFmpegDlg::MoveFFplayVideoWindow()
+{
+	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
+	if (videoWindowHandle)
+	{
+		RECT targetRect;
+		mVideoWnd.GetWindowRect(&targetRect);
+
+		// SetWindowPos会导致主窗口卡顿“拖不动”
+		//::SetWindowPos(videoWindowHandle, NULL, targetRect.left, targetRect.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+		::MoveWindow(videoWindowHandle, targetRect.left, targetRect.top, mVideoWndWidth, mVideoWndHeight, TRUE);
+	}
+}
+
+void CTestFFmpegDlg::OnMove(int x, int y)
+{
+	__super::OnMove(x, y);
+
+	MoveFFplayVideoWindow();
+}
+
+
+void CTestFFmpegDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == PLAYER_TIMER_ID)
+	{
+		HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
+		if (videoWindowHandle) {
+			MoveFFplayVideoWindow();
+			//KillTimer(mPlayerTimer);
+			//mPlayerTimer = 0;
+		}
+	}
+
+	__super::OnTimer(nIDEvent);
 }

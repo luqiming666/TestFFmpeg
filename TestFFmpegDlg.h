@@ -34,6 +34,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnDestroy();
+	afx_msg void OnMove(int x, int y);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 	virtual void OnTaskCompleted();
 
@@ -41,9 +43,14 @@ private:
 	CString mSourceFile;
 	CString mSourceFile2;
 	CStatic mVideoWnd;
+	int		mVideoWndWidth;
+	int		mVideoWndHeight;
+	UINT_PTR	mPlayerTimer;
+
 	FFmpegTask mTaskRunner;
 
 	void HideFFplayConsoleWindow();
+	void MoveFFplayVideoWindow();
 
 public:
 	afx_msg void OnBnClickedButtonBrowse();
