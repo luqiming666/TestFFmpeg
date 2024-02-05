@@ -20,6 +20,7 @@
 #define IDC_BUTTON_TEST_ANYTHING        1010
 #define IDC_STATIC_VIDEO_WND            1011
 #define IDC_BUTTON_PROBE                1012
+#define IDC_BUTTON_PLAY_AUDIO_ONLY      1013
 
 // Next default values for new objects
 // 

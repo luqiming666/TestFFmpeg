@@ -89,6 +89,7 @@ BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PROBE, &CTestFFmpegDlg::OnBnClickedButtonProbe)
 	ON_WM_MOVE()
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_BUTTON_PLAY_AUDIO_ONLY, &CTestFFmpegDlg::OnBnClickedButtonPlayAudioOnly)
 END_MESSAGE_MAP()
 
 
@@ -309,6 +310,25 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 	//Sleep(1000);
 	//MoveFFplayVideoWindow();
 	mPlayerTimer = SetTimer(PLAYER_TIMER_ID, PLAYER_TIMER_INTERVAL, NULL);
+}
+
+// Pure audio playback
+void CTestFFmpegDlg::OnBnClickedButtonPlayAudioOnly()
+{
+	if (mSourceFile.IsEmpty()) {
+		AfxMessageBox(_T("请先指定源文件！"));
+		return;
+	}
+	if (mTaskRunner.IsRunning())
+	{
+		AfxMessageBox(_T("请等待当前的媒体文件播放结束！"));
+		return;
+	}
+
+	CString strCmd;
+	strCmd.Format(_T(" -hide_banner -nodisp -autoexit -i %s"), mSourceFile);
+	mTaskRunner.SetTaskObserver(NULL);
+	mTaskRunner.Play(strCmd);
 }
 
 void CTestFFmpegDlg::HideFFplayConsoleWindow()

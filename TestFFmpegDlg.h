@@ -63,4 +63,5 @@ public:
 	afx_msg void OnBnClickedButtonStop();
 	afx_msg void OnBnClickedButtonTestAnything();
 	afx_msg void OnBnClickedButtonProbe();
+	afx_msg void OnBnClickedButtonPlayAudioOnly();
 };
