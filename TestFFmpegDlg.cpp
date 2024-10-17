@@ -69,7 +69,7 @@ void CTestFFmpegDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE, mSourceFile);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE2, mSourceFile2);
-	DDX_Control(pDX, IDC_STATIC_VIDEO_WND, mVideoWnd);
+	DDX_Control(pDX, IDC_EDIT_VIDEO_WND, mVideoWnd);
 }
 
 BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)

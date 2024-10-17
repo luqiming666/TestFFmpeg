@@ -212,6 +212,7 @@
     <ResourceCompile Include="TestFFmpeg.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="README.md" />
     <None Include="res\TestFFmpeg.rc2" />
   </ItemGroup>
   <ItemGroup>
