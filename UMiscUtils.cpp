@@ -184,7 +184,7 @@ namespace UMiscUtils {
 		// 后面是PCM数据...
 	}
 
-	bool RunExternalApp(TCHAR* appPath, TCHAR* appParams, bool bSync)
+	bool RunExternalApp(const TCHAR* appPath, TCHAR* appParams, bool bSync)
 	{
 		// 创建进程信息结构体
 		PROCESS_INFORMATION processInfo;
