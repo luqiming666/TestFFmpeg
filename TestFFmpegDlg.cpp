@@ -485,10 +485,10 @@ void CTestFFmpegDlg::OnTimer(UINT_PTR nIDEvent)
 		HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
 		if (videoWindowHandle) {
 			MoveFFplayVideoWindow();
-			//KillTimer(mPlayerTimer);
-			//mPlayerTimer = 0;
-
 			RefineFFplayVideoWindow(videoWindowHandle);
+
+			KillTimer(mPlayerTimer);
+			mPlayerTimer = 0;			
 		}
 	}
 
