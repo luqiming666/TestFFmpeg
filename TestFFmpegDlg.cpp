@@ -60,6 +60,8 @@ CTestFFmpegDlg::CTestFFmpegDlg(CWnd* pParent /*=nullptr*/)
 	, mVideoWndWidth(0)
 	, mVideoWndHeight(0)
 	, mPlayerTimer(0)
+	, mbFullscreen(FALSE)
+	, mbFFplayWindowRefined(false)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -70,6 +72,7 @@ void CTestFFmpegDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE, mSourceFile);
 	DDX_Text(pDX, IDC_EDIT_SRC_FILE2, mSourceFile2);
 	DDX_Control(pDX, IDC_EDIT_VIDEO_WND, mVideoWnd);
+	DDX_Check(pDX, IDC_CHECK_FULLSCREEN, mbFullscreen);
 }
 
 BEGIN_MESSAGE_MAP(CTestFFmpegDlg, CDialogEx)
@@ -125,6 +128,8 @@ BOOL CTestFFmpegDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	//UMiscUtils::EnableConsoleWindow();
+
 	mTaskRunner.SetTaskObserver(this);
 	mTaskRunner.LocateTools(UMiscUtils::GetRuntimeFilePath());
 
@@ -208,6 +213,8 @@ void CTestFFmpegDlg::OnTaskCompleted()
 
 void CTestFFmpegDlg::OnBnClickedButtonBrowse()
 {
+	UpdateData(TRUE);
+
 	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
 		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
 		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
@@ -222,6 +229,8 @@ void CTestFFmpegDlg::OnBnClickedButtonBrowse()
 
 void CTestFFmpegDlg::OnBnClickedButtonBrowse2()
 {
+	UpdateData(TRUE);
+
 	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
 		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
 		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
@@ -245,7 +254,7 @@ void CTestFFmpegDlg::OnBnClickedButtonTranscodeWave()
 	//CString strDestFile = UMiscUtils::GetRuntimeFilePath(_T("test.wav"));
 
 	CString strCmd;
-	strCmd.Format(_T(" -i %s -vn -y %s"), mSourceFile, _T("test.wav")); // 注意：-i之前须有一个空格
+	strCmd.Format(_T(" -i %s -vn -y %s"), (LPCTSTR)mSourceFile, _T("test.wav")); // 注意：-i之前须有一个空格
 	mTaskRunner.Run(strCmd);
 }
 
@@ -259,7 +268,7 @@ void CTestFFmpegDlg::OnBnClickedButtonAudioChannelMerge()
 
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -i %s -filter_complex \"[0:a]apad=pad_len=0[a1];[1:a]apad[a2];[a1][a2]amerge=inputs=2,pan=stereo|c0=c0|c1=c2[aout]\" -map [aout] -y %s"), 
-		mSourceFile, mSourceFile2, _T("audio_merge.ogg"));
+		(LPCTSTR)mSourceFile, (LPCTSTR)mSourceFile2, _T("audio_merge.ogg"));
 	mTaskRunner.Run(strCmd);		
 }
 
@@ -274,7 +283,7 @@ void CTestFFmpegDlg::OnBnClickedButtonReplaceAudio()
 
 	CString strCmd;
 	strCmd.Format(_T(" -i %s -i %s -c:v libx265 -c:a aac -map 0:v -map 1:a -y %s"),
-		mSourceFile, mSourceFile2, _T("audio_replaced.mp4"));
+		(LPCTSTR)mSourceFile, (LPCTSTR)mSourceFile2, _T("audio_replaced.mp4"));
 	mTaskRunner.Run(strCmd);
 }
 
@@ -298,8 +307,16 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 		return;
 	}
 
+	UpdateData(TRUE);
+
+	RECT targetRect;
+	mVideoWnd.GetWindowRect(&targetRect);
+	int wndWidth = (targetRect.right - targetRect.left) / 4 * 4; // 对齐？
+	int wndHeight = targetRect.bottom - targetRect.top;
+	CString fsCmd = mbFullscreen ? _T("-fs") : _T(""); // full-screen?
+
 	CString strCmd;
-	strCmd.Format(_T(" -hide_banner -autoexit -noborder -alwaysontop -x %d -y %d -i %s"), 360, 240, mSourceFile);
+	strCmd.Format(_T(" -hide_banner -autoexit -noborder -alwaysontop %s -left %d -top %d -x %d -y %d -i %s"), (LPCTSTR)fsCmd, targetRect.left, targetRect.top, wndWidth, wndHeight, (LPCTSTR)mSourceFile);
 	mTaskRunner.SetTaskObserver(NULL);
 	mTaskRunner.Play(strCmd);
 
@@ -309,7 +326,10 @@ void CTestFFmpegDlg::OnBnClickedButtonPlay()
 
 	//Sleep(1000);
 	//MoveFFplayVideoWindow();
-	mPlayerTimer = SetTimer(PLAYER_TIMER_ID, PLAYER_TIMER_INTERVAL, NULL);
+	mbFFplayWindowRefined = false; // 开播后修改视频窗口风格
+	if (!mbFullscreen) {
+		mPlayerTimer = SetTimer(PLAYER_TIMER_ID, PLAYER_TIMER_INTERVAL, NULL);
+	}	
 }
 
 // Pure audio playback
@@ -326,7 +346,7 @@ void CTestFFmpegDlg::OnBnClickedButtonPlayAudioOnly()
 	}
 
 	CString strCmd;
-	strCmd.Format(_T(" -hide_banner -nodisp -autoexit -i %s"), mSourceFile);
+	strCmd.Format(_T(" -hide_banner -nodisp -autoexit -i %s"), (LPCTSTR)mSourceFile);
 	mTaskRunner.SetTaskObserver(NULL);
 	mTaskRunner.Play(strCmd);
 }
@@ -345,6 +365,7 @@ void CTestFFmpegDlg::HideFFplayConsoleWindow()
 		}
 	}
 }
+
 void pressKey(WORD key) {
 	INPUT input;
 	input.type = INPUT_KEYBOARD;
@@ -394,28 +415,16 @@ void CTestFFmpegDlg::OnBnClickedButtonStop()
 	{
 		::PostMessage(videoWindowHandle, WM_CLOSE, 0, 0);
 	}
-}
 
+	if (mPlayerTimer != 0) {
+		KillTimer(mPlayerTimer);
+		mPlayerTimer = 0;
+	}	
+}
 
 void CTestFFmpegDlg::OnBnClickedButtonTestAnything()
 {
-	HWND videoWindowHandle = ::FindWindow(_T("SDL_app"), NULL);
-	if (videoWindowHandle)
-	{
-		// 修改窗口样式
-		LONG_PTR style = ::GetWindowLongPtr(videoWindowHandle, GWL_STYLE);
-		style = style & ~WS_CAPTION; // 去掉标题栏
-		style = style | WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_EX_TOPMOST;
-
-		::SetWindowLongPtr(videoWindowHandle, GWL_STYLE, style);
-
-		// 使样式改变生效
-		::SetWindowPos(videoWindowHandle, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
-
-		//::SetParent(videoWindowHandle, mVideoWnd.GetSafeHwnd());
-	}
 }
-
 
 void CTestFFmpegDlg::OnBnClickedButtonProbe()
 {
@@ -442,6 +451,25 @@ void CTestFFmpegDlg::MoveFFplayVideoWindow()
 	}
 }
 
+void CTestFFmpegDlg::RefineFFplayVideoWindow(HWND hwnd)
+{
+	if (mbFFplayWindowRefined) return;
+
+	// 修改窗口样式
+	LONG_PTR style = ::GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+	style = style & ~WS_CAPTION; // 去掉标题栏
+	style = style & ~WS_EX_APPWINDOW; // 任务栏不显示图标
+	style = style | WS_EX_TOOLWINDOW;
+
+	::SetWindowLongPtr(hwnd, GWL_EXSTYLE, style);
+
+	// 使样式改变生效
+	//::SetParent(hwnd, mVideoWnd.GetSafeHwnd());
+	::SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+
+	mbFFplayWindowRefined = true;
+}
+
 void CTestFFmpegDlg::OnMove(int x, int y)
 {
 	__super::OnMove(x, y);
@@ -459,6 +487,8 @@ void CTestFFmpegDlg::OnTimer(UINT_PTR nIDEvent)
 			MoveFFplayVideoWindow();
 			//KillTimer(mPlayerTimer);
 			//mPlayerTimer = 0;
+
+			RefineFFplayVideoWindow(videoWindowHandle);
 		}
 	}
 

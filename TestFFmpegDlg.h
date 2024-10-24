@@ -46,11 +46,14 @@ private:
 	int		mVideoWndWidth;
 	int		mVideoWndHeight;
 	UINT_PTR	mPlayerTimer;
+	BOOL mbFullscreen;
+	bool mbFFplayWindowRefined;
 
 	FFmpegTask mTaskRunner;
 
 	void HideFFplayConsoleWindow();
 	void MoveFFplayVideoWindow();
+	void RefineFFplayVideoWindow(HWND hwnd);
 
 public:
 	afx_msg void OnBnClickedButtonBrowse();

@@ -22,6 +22,7 @@
 #define IDC_BUTTON_PROBE                1012
 #define IDC_BUTTON_PLAY_AUDIO_ONLY      1013
 #define IDC_EDIT_VIDEO_WND              1015
+#define IDC_CHECK_FULLSCREEN            1016
 
 // Next default values for new objects
 // 
@@ -29,7 +30,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
