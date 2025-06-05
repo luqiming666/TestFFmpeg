@@ -211,18 +211,22 @@ void CTestFFmpegDlg::OnTaskCompleted()
 	AfxMessageBox(_T("FFmpeg task done!"));
 }
 
+static int lastFilterIndex = 0; // 记住上次用的过滤器
 void CTestFFmpegDlg::OnBnClickedButtonBrowse()
 {
 	UpdateData(TRUE);
 
 	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, 
-		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
-		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
+		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov|\
+		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma|\
 		All Files (*.*)|*.*||"),
 		NULL);
+	fileDlg.m_ofn.nFilterIndex = lastFilterIndex;
 	if (fileDlg.DoModal() == IDOK)
 	{
 		mSourceFile = fileDlg.GetPathName();
+		lastFilterIndex = fileDlg.m_ofn.nFilterIndex;
+
 		UpdateData(FALSE);
 	}
 }
@@ -232,13 +236,16 @@ void CTestFFmpegDlg::OnBnClickedButtonBrowse2()
 	UpdateData(TRUE);
 
 	CFileDialog fileDlg(TRUE, NULL, NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov| \
-		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma| \
+		_T("Video Files (*.mp4;*.mpg;*.avi;*.wmv;*.mov)|*.mp4;*.mpg;*.avi;*.wmv;*.mov|\
+		Audio Files (*.mp3;*.ogg;*.wav;*.wma)|*.mp3;*.ogg;*.wav;*.wma|\
 		All Files (*.*)|*.*||"),
 		NULL);
+	fileDlg.m_ofn.nFilterIndex = lastFilterIndex;
 	if (fileDlg.DoModal() == IDOK)
 	{
 		mSourceFile2 = fileDlg.GetPathName();
+		lastFilterIndex = fileDlg.m_ofn.nFilterIndex;
+
 		UpdateData(FALSE);
 	}
 }
